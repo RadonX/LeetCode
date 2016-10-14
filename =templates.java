@@ -1,33 +1,18 @@
 
-// until I find a better version
 public int binarySearch(int[] nums, int target){
-    if (nums == null || nums.length == 0) return -1;//extreme case
-    int start = 0;
-    int end = nums.length - 1;
-    while (start + 1 < end){ //
-        int mid = start + (end - start) / 2;//prevent overflow
-        if (target < nums[mid]){
-            end = mid;
-        }else if (target > nums[mid]){
-            start = mid;
-        }else{  end = mid; }
+    while(left <= right) {
+        mid = left + (right-­left)/2;
+        midVal = getIthVal(matrix, mid);
+        if(midVal == target)
+            return true;
+        else if(midVal > target)
+            right = mid­-1;
+        else
+            left = mid+1;
     }
-    if (nums[start] == target) {return start;}
-    if (nums[end] == target) {return end;
-    return -1;
+    return false;
 }
 
-while(left <= right) {
-    mid = left + (right-­left)/2;
-    midVal = getIthVal(matrix, mid);
-    if(midVal == target)
-        return true;
-    else if(midVal > target)
-        right = mid­-1;
-    else
-        left = mid+1;
-}
-return false;
 
 // partition
 private static int partition(Comparable[] elements, int start, int end) {

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 #include <deque>
+#include <queue>
 #include <unordered_map>
 #include <list>
 #include <map>
@@ -11,10 +12,18 @@ using namespace std;
 #include <iostream>
 #include <map>
 
+void changeInt(vector<int> &b) {
+    a = 5;
+}
+
 int main ()
 {
   std::map<char,int> mymap;
   std::map<char,int>::iterator itlow,itup;
+  vector<vector<int> > a(10, vector<int>(10,1));
+  vector<int> b {1,2,3,4};
+  vector<int>::iterator it = b.end();
+  cout << *prev(b.end()) << endl;
 
   mymap['a']=20;
   // mymap['b']=40;
