@@ -16,22 +16,18 @@
 #include <algorithm>
 using namespace std;
 
-#define DEBUG
+// #define DEBUG
 
 struct Pass {
     long long prod;
     long m, w; // m >= w
-    Pass(long m, long w):
-        prod((long long)m * w), m(max(m,w)), w(min(m,w)) {}
+    long long ncandy;
+    Pass(long m, long w, long long ncandy = 0):
+        prod((long long)m * w), m(max(m,w)), w(min(m,w)), ncandy(ncandy) {}
 };
-struct CmpPass {
-    bool operator() (const struct Pass &a, const struct Pass &b) const {
-        return (a.prod > b.prod) || (a.prod == b.prod && a.m > b.m) ;
-    }
-};
-map<Pass, long long, CmpPass> f[2];
+Pass f[2] = {Pass(0,0),Pass(0,0)};
 
-inline Pass buyWhat(const Pass &pass, long k) {
+inline Pass buyMW(const Pass &pass, long k) {
     long mw = pass.m + pass.w + k;
     long m = max(pass.m, (mw+1)/2);
     long w = mw - m;
@@ -42,36 +38,27 @@ long long curMax, p;
 long long n;
 long i, maxi;
 
-template <class T, typename S, class C>
-inline void makeOnePass(map<T, S, C> &prev, map<T, S, C> &cur) {
-    pair<map<Pass, long long , CmpPass>::iterator, bool> itpair;
-    for (const auto &state: prev) {
-        // f[prev][m][w] + m*w -> f[cur][m][w]
-        // f[prev][m][w] - p*k + mk*wk -> f[cur][mk][wk]
-        long maxk = state.second / p;//state.first.prod / p;
-        for (auto k = maxk; k >= 0; --k){ // k == 0
-            Pass pass = buyWhat(state.first, k);
-            long long ncandy = state.second - p*k + pass.prod;
-            curMax = max(curMax, ncandy);
-            // if not buy more machine or worker in the future
-            // estimate i
-            long tmp = i + max(n - ncandy + pass.prod - 1, 0LL) / pass.prod;
-            maxi = min(maxi, tmp);
-            if (k == maxk) {
-                // we already estimate i, so need to add k < maxk state
-                itpair = cur.emplace(make_pair(pass, ncandy));
-                if (!itpair.second){
-                    map<Pass, long long, CmpPass>::iterator &it = itpair.first;
-                    it->second = max(it->second, ncandy);
-                }
-            }
+inline void makeOnePass(Pass &prev, Pass &cur) {
+    auto &state = prev;
+    // f[prev][m][w] + m*w -> f[cur][m][w]
+    // f[prev][m][w] - p*k + mk*wk -> f[cur][mk][wk]
+    long maxk = state.ncandy / p;
+    for (auto k = maxk; k >= 0; --k){
+        Pass pass = buyMW(state, k);
+        pass.ncandy = state.ncandy - p*k + pass.prod;
+        curMax = max(curMax, pass.ncandy);
+        // if not buy more machine or worker in the future
+        // estimate i
+        long tmp = i + max(n - pass.ncandy + pass.prod - 1, 0LL) / pass.prod;
+        maxi = min(maxi, tmp);
+        if (k == maxk) cur = pass;
 #ifdef DEBUG
-            cout << pass.m << ',' << pass.w << '(' << k << "):" << ncandy
-                << " - " << maxi << endl;
+        cout << pass.m << ',' << pass.w << '(' << k << "):" << pass.ncandy
+            << " - " << maxi << endl;
 #endif
-            if (p <= state.first.m) break; // must spend all, need to try other k
-        }
+        if (p <= state.m) break; // must spend all, need to try other k
     }
+
 }
 
 int main() {
@@ -82,15 +69,14 @@ int main() {
     i = 1;
     maxi = (n+m*w-1) / (m*w);
     curMax = (long long)m*w;
-    f[toggle].emplace(make_pair(Pass(m, w), curMax)); // 1st pass
+    f[toggle] = Pass(m, w, curMax); // 1st pass
     while (i < maxi && curMax < n) { // prev
         // new pass
         ++i;
 #ifdef DEBUG
         cout << '[' << i << ']' << endl;
 #endif
-        map<Pass, long long, CmpPass> &b = f[1 - toggle];
-        b.clear(); // cur
+        Pass &b = f[1 - toggle];
         makeOnePass(f[toggle], b);
         toggle = 1 - toggle;
 #ifdef DEBUG
