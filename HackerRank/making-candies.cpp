@@ -4,6 +4,7 @@
  * #submissions: n
  * Dynamic Programming (sparse)
  * 1. wrong variable (map's it.first, .second not clear)
+ * 2. boundary == sign not set appropriately
  */
 
 #include <cmath>
@@ -15,7 +16,7 @@
 #include <algorithm>
 using namespace std;
 
-// #define DEBUG
+#define DEBUG
 
 struct Pass {
     long long prod;
@@ -38,6 +39,8 @@ inline Pass buyWhat(const Pass &pass, long k) {
 }
 
 long long curMax, p;
+long long n;
+long i, maxi;
 
 template <class T, typename S, class C>
 inline void makeOnePass(map<T, S, C> &prev, map<T, S, C> &cur) {
@@ -46,39 +49,46 @@ inline void makeOnePass(map<T, S, C> &prev, map<T, S, C> &cur) {
         // f[prev][m][w] + m*w -> f[cur][m][w]
         // f[prev][m][w] - p*k + mk*wk -> f[cur][mk][wk]
         long maxk = state.second / p;//state.first.prod / p;
-#ifdef DEBUG
-        cout << state.second << ',' << maxk << endl;
-#endif
-        long mink = 0;
-        if (p <= state.first.m) mink = maxk; // spend all
-        for (auto k = maxk; k >= mink; --k){
+        for (auto k = maxk; k >= 0; --k){ // k == 0
             Pass pass = buyWhat(state.first, k);
             long long ncandy = state.second - p*k + pass.prod;
-#ifdef DEBUG
-            cout << pass.m << ',' << pass.w << '(' << k << "):" << ncandy << endl;
-#endif
-            itpair = cur.emplace(make_pair(pass, ncandy));
-            if (!itpair.second){
-                map<Pass, long long, CmpPass>::iterator &it = itpair.first;
-                it->second = max(it->second, ncandy);
-            }
             curMax = max(curMax, ncandy);
+            // if not buy more machine or worker in the future
+            // estimate i
+            long tmp = i + max(n - ncandy + pass.prod - 1, 0LL) / pass.prod;
+            maxi = min(maxi, tmp);
+            if (k == maxk) {
+                // we already estimate i, so need to add k < maxk state
+                itpair = cur.emplace(make_pair(pass, ncandy));
+                if (!itpair.second){
+                    map<Pass, long long, CmpPass>::iterator &it = itpair.first;
+                    it->second = max(it->second, ncandy);
+                }
+            }
+#ifdef DEBUG
+            cout << pass.m << ',' << pass.w << '(' << k << "):" << ncandy
+                << " - " << maxi << endl;
+#endif
+            if (p <= state.first.m) break; // must spend all, need to try other k
         }
     }
 }
 
 int main() {
-    long i, m, w;
-    long long n;
+    long  m, w;
     cin >> m >> w >> p >> n;
     int toggle = 0;
 
     i = 1;
+    maxi = (n+m*w-1) / (m*w);
     curMax = (long long)m*w;
     f[toggle].emplace(make_pair(Pass(m, w), curMax)); // 1st pass
-    while (curMax < n) { // prev
+    while (i < maxi && curMax < n) { // prev
         // new pass
         ++i;
+#ifdef DEBUG
+        cout << '[' << i << ']' << endl;
+#endif
         map<Pass, long long, CmpPass> &b = f[1 - toggle];
         b.clear(); // cur
         makeOnePass(f[toggle], b);
