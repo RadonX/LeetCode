@@ -3,7 +3,7 @@
  * O()
  * #submissions: n
  * Dynamic Programming (sparse)
- * 1. wrong variable (map's it.first, .second not clear)
+ * 1. Why cannot previous version pass 1 1 7 12 -> 12 test case
  * 2. boundary == sign not set appropriately
  */
 
@@ -43,22 +43,36 @@ inline void makeOnePass(Pass &prev, Pass &cur) {
     // f[prev][m][w] + m*w -> f[cur][m][w]
     // f[prev][m][w] - p*k + mk*wk -> f[cur][mk][wk]
     long maxk = state.ncandy / p;
-    for (auto k = maxk; k >= 0; --k){
-        Pass pass = buyMW(state, k);
-        pass.ncandy = state.ncandy - p*k + pass.prod;
-        curMax = max(curMax, pass.ncandy);
-        // if not buy more machine or worker in the future
-        // estimate i
-        long tmp = i + max(n - pass.ncandy + pass.prod - 1, 0LL) / pass.prod;
-        maxi = min(maxi, tmp);
-        if (k == maxk) cur = pass;
-#ifdef DEBUG
-        cout << pass.m << ',' << pass.w << '(' << k << "):" << pass.ncandy
-            << " - " << maxi << endl;
-#endif
-        if (p <= state.m) break; // must spend all, need to try other k
-    }
+    long tmp;
 
+    // spend all candies
+    Pass &pass = cur;
+    pass = buyMW(state, maxk);
+    pass.ncandy = state.ncandy - p*maxk + pass.prod;
+    curMax = max(curMax, pass.ncandy);
+    // estimate maxi
+    tmp = i + max((long long)ceil((double)(n - pass.ncandy) / pass.prod) , 0LL);
+    maxi = min(maxi, tmp);
+#ifdef DEBUG
+    cout << pass.m << ',' << pass.w << '(' << maxk << "):" << pass.ncandy
+        << " - " << maxi << endl;
+#endif
+
+    // select a best k \in [0, maxk]
+    if (maxk == 0) return;
+    if (p <= state.m) return; // must spend all
+    long long targetNcandy = n - state.ncandy;
+    if (maxk <= state.m - state.w) {
+        // need to buy k Ws
+        // minimize (targetNcandy + p*k) / (m*w+m*k)
+        if (p * state.w - targetNcandy <= 0) return; // maxk is best
+    }
+    // try k == 0
+    long long ncandy = state.ncandy + state.prod;
+    // not buy more machine or worker in the future
+    // estimate maxi
+    tmp = i + max((long long)ceil((double)(n - ncandy) / state.prod) , 0LL);
+    maxi = min(maxi, tmp);
 }
 
 int main() {
@@ -67,8 +81,8 @@ int main() {
     int toggle = 0;
 
     i = 1;
-    maxi = (n+m*w-1) / (m*w);
     curMax = (long long)m*w;
+    maxi =  (long long)ceil((double)n  / curMax);
     f[toggle] = Pass(m, w, curMax); // 1st pass
     while (i < maxi && curMax < n) { // prev
         // new pass
@@ -86,7 +100,6 @@ int main() {
     cout << i;
 
     // enumerate m + w ??
-    // binary search ??
     // quadratic ??
 
     return 0;
