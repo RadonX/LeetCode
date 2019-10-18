@@ -7,6 +7,20 @@
  * 2. boundary == sign not set appropriately
  */
 
+/*
+    1. m + w, m == w
+    2.  + -0 + m0 * w0
+        + ( - x1*p + (m1+x11) * (w1+x12)  )
+        + ( m2 * w2 - x2*p )  , m1 + w1 + x1 = m2 + w2
+    3. given fixed num of machines, should buy them earlier
+    4. no new machines in last round
+    5. high investment benefits in the long run
+    6. upper bound, X -> m' + w' >= n
+    7. the larger X, the more round
+    8. when w >= p, should buy as many x as possible in that round
+*/
+
+
 #include <cmath>
 #include <cstdio>
 #include <vector>
